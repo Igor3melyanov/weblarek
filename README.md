@@ -98,3 +98,83 @@ Presenter - презентер содержит основную логику п
 `emit<T extends object>(event: string, data?: T): void` - инициализация события. При вызове события в метод передается название события и объект с данными, который будет использован как аргумент для вызова обработчика.  
 `trigger<T extends object>(event: string, context?: Partial<T>): (data: T) => void` - возвращает функцию, при вызове которой инициализируется требуемое в параметрах событие с передачей в него данных из второго параметра.
 
+## Данные
+### Интерфейсы
+#### Интерфейс товара `IProduct`:
+Отвечает за хранение ингформации о товаре.
+Поля:
+- id: string;
+- category: string;
+- title: string;
+- description: string;
+- image: string;
+- price: number | null;
+
+#### Интерфейс покупателя `ICustomer`:
+Отвечает за хранение данных о покупаетеле.
+Поля:
+- payments: 'cash' | 'card' | '';
+- adress: string;
+- email: string;
+- phone: string;
+
+#### Интерфейс данных для отправки заказа `IOrderRequest`:
+- payment: 'card' | 'cash';
+- email: string;
+- phone: string;
+- address: string;
+- total: number;
+- items: string[]; (массив ID товаров)
+
+#### Интерфейс ответф от сервера о заказе `IOrderResponse`:
+- id: string;
+- total: number;
+
+#### Интерфейс ответа сервера с каталогом товаров `IApiResponse`:
+- total: number;
+- items: IProduct[];
+
+### Модели данных
+#### Класс каталога товаров `Catalog`:
+Хранит массив карточек товаров и  информацию о выбранной карточке товара. Позволяет: получить и сохранить массив карточек товаров; получить и сохранить товар для отображения.
+Поля:
+- catalog: IProduct[];
+- currentProduct: IProduct;
+Методы:
+- getCatalog(): IProduct[];
+- setCatalog(): void;
+- getCardProduct(): IProduct;
+- setCardProduct(): void;
+#### Класс корзины с товарами `Basket`:
+Хранит массив товаров, выбранных для покупки. Позволяет: получить массив товаров, находящихся в корзине; добавить товар в корзину; удалить товар из корзины; очистить корзину после оформления заказа; получить общую стоимость товаров в корзине; получить общее число товаров в корзине; проверить наличие товара в корзине по его id.
+Поля:
+- busket: IProduct[];
+Методы:
+- getBusketProducts(): IProduct[];
+- addProductToBusket(id: Iproduct['id']): IProduct[];
+- deleteProductFromBusket(id: IProduct['id']): IProduct[];
+- clearBusket(): [];
+- getTotalSum(): number;
+- getTotalProducts(): number;
+- checkProductInBusket(id: IProduct['id']): boolean;
+#### Класс покупателя `Customer`:
+Хранит данные о покупателе, наследует интерфейс `ICustomer`. Позволяет: сохранять данные покупателя; получать данные покупателя; валидация форм; очистка данных.
+Поля:
+- payments: 'cash' | 'card' | '';
+- adress: string;
+- email: string;
+- phone: string;
+Методы:
+- setCustomerInfo(info: ICustomer): void;
+- getCustomerInfo(): ICustomer;
+- checkValidityForms(): boolean;
+- clearCustomerInfo(): void;
+
+## Слой коммуникации
+### Класс `WebLarekApi`:
+Отвечает за взаимодействие с API сервера "Веб-ларёк". Использует композицию с классом `Api` для выполнения HTTP-запросов. Позволяет: получать каталог товаров с сервера; отправлять заказ на сервер;
+Методы:
+- getProductList(): Promise<IProduct[]>
+- submitOrder(order: IOrderRequest): Promise<IOrderResponse>
+- get<T>(uri: string): Promise<T>
+- post<T>(uri: string, data: object, method?: ApiPostMethods): Promise<T>
