@@ -4,9 +4,16 @@ export class Catalog {
     catalog: IProduct[];
     currentProduct: IProduct;
 
-    constructor(catalog: IProduct[], currentProduct: IProduct) {
-        this.catalog = catalog;
-        this.currentProduct = currentProduct;
+    constructor() {
+        this.catalog = [];
+        this.currentProduct = {
+            id: '',
+            category: '',
+            title: '',
+            description: '',
+            image: '',
+            price: null
+        };
     };
 
     getCatalog(): IProduct[] {

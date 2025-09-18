@@ -14,10 +14,10 @@ export class Customer implements ICustomer{
     }
 
     setCustomerInfo(info: ICustomer): void {
-        this.payments = info.payments;
-        this.address = info.address;
-        this.email = info.email;
-        this.phone = info.phone;
+        if (info.payments !== undefined) this.payments = info.payments;
+        if (info.address !== undefined) this.address = info.address;
+        if (info.email !== undefined) this.email = info.email;
+        if (info.phone !== undefined) this.phone = info.phone;
     };
     getCustomerInfo(): ICustomer {
         return {
@@ -27,22 +27,38 @@ export class Customer implements ICustomer{
             phone: this.phone
         }
     };
-    checkValidityForms(): boolean {
-        if (!this.payments) return false;
-        if (!this.address.trim()) return false;
-        if (!this.email.trim()) return false;
-        if (!this.phone.trim()) return false;
+    validateField(field: keyof ICustomer): string {
+        const value = this[field];
+        
+        switch (field) {
+            case 'payments':
+                return !value ? 'Способ оплаты должен быть выбран' : '';
+            case 'address':
+                return !value ? 'Поле адреса пустое' : '';
+            case 'email':
+                return !value ? 'Поле Email пустое' : '';
+            case 'phone':
+                return !value ? 'Поле телефона пустое' : '';
+            default:
+                return '';
+        }
+    }
 
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(this.email)) {
-            return false;
+    checkValidityForms(): {
+        payments?: string,
+        address?: string,
+        email?: string,
+        phone?:string
+    } { 
+        const errors = {
+            payments: this.validateField('payments'),
+            address: this.validateField('address'),
+            email: this.validateField('email'),
+            phone: this.validateField('phone')
         };
-        const phoneDigits = this.phone.replace(/\D/g, '');
-        if (phoneDigits.length < 10) {
-            return false;
-        };
-        return true;
-    };
+
+        return errors;
+    }; 
     clearCustomerInfo(): void {
         this.payments = '';
         this.address = '';

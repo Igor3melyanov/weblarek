@@ -1,20 +1,22 @@
 import { IProduct } from "../../types";
 
 export class Basket {
-    basket: IProduct[];
+    protected basket: IProduct[];
 
-    constructor(basket: IProduct[]) {
-        this.basket = basket;
+    constructor() {
+        this.basket = [];
     };
 
-    getBusketProducts(): IProduct[] {
+    getBasketProducts(): IProduct[] {
         return this.basket;
     };
     addProductToBasket(product: IProduct): IProduct[] {
-        if (!this.checkProductInBasket(product.id)) {
-            this.basket.push(product);
+        if (product.price !== null && product.price !== undefined) {
+            if (!this.checkProductInBasket(product.id)) { 
+                this.basket.push(product); 
+            } 
         }
-        return this.basket;
+        return this.basket; 
     };
     deleteProductFromBasket(id: IProduct['id']): IProduct[] {
         this.basket = this.basket.filter((product) => product.id !== id);
@@ -25,7 +27,7 @@ export class Basket {
     };
     getTotalSum(): number {
         return this.basket.reduce((total, product) => {
-            return total + (product.price || 0);
+            return total + (product.price as number);
         }, 0);
     };
     getTotalProducts(): number {

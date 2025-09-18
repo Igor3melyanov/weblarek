@@ -1,16 +1,15 @@
-import { ApiPostMethods, IApi, IApiResponse, IOrderRequest, IOrderResponse, IProduct } from "../../types";
-import { Api } from "../base/Api";
+import { IApi, IApiResponse, IOrderRequest, IOrderResponse, IProduct } from "../../types";
 
-export class WebLarekApi implements IApi {
-    private api: Api;
+export class WebLarekApi {
+    private api: IApi;
 
-    constructor(baseUrl: string, options: RequestInit = {}) {
-        this.api = new Api(baseUrl, options);
+   constructor(api: IApi) {
+        this.api = api;
     }
 
     async getProductList(): Promise<IProduct[]> {
         try {
-            const response: IApiResponse = await this.api.get('/product/');
+            const response: IApiResponse = await this.api.get<IApiResponse>('/product/');
             return response.items;
         } catch (error) {
             console.error('Ошибка при получении каталога товаров:', error);
@@ -20,18 +19,10 @@ export class WebLarekApi implements IApi {
 
     async submitOrder(order: IOrderRequest): Promise<IOrderResponse> {
         try {
-            return await this.api.post('/order/', order);
+            return await this.api.post<IOrderResponse>('/order/', order);
         } catch (error) {
             console.error('Ошибка при отправке заказа:', error);
             throw error;
         }
-    }
-
-    get<T extends object>(uri: string): Promise<T> {
-        return this.api.get<T>(uri);
-    }
-
-    post<T extends object>(uri: string, data: object, method?: ApiPostMethods): Promise<T> {
-        return this.api.post<T>(uri, data, method);
     }
 }
