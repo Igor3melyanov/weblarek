@@ -6,14 +6,14 @@ export class Customer implements ICustomer{
     email: string;
     phone: string;
 
-    constructor(info: ICustomer) {
-        this.payments = info.payments;
-        this.address = info.address;
-        this.email = info.email;
-        this.phone = info.phone
+    constructor() {
+        this.payments = '';
+        this.address = '';
+        this.email = '';
+        this.phone = ''
     }
 
-    setCustomerInfo(info: ICustomer): void {
+    setCustomerInfo(info: Partial<ICustomer>): void {
         if (info.payments !== undefined) this.payments = info.payments;
         if (info.address !== undefined) this.address = info.address;
         if (info.email !== undefined) this.email = info.email;

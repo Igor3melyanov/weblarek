@@ -4,7 +4,6 @@ import { Catalog } from './components/Models/Catalog';
 import { Customer } from './components/Models/Customer';
 import { WebLarekApi } from './components/Models/WeblarekAPI';
 import './scss/styles.scss';
-import { ICustomer } from './types';
 import { API_URL } from './utils/constants';
 import { apiProducts } from './utils/data';
 
@@ -25,7 +24,7 @@ if (productToAdd.price !== null) {
 console.log(basket.checkProductInBasket(apiProducts.items[1].id));
 
 console.log('Общая сумма:', basket.getTotalSum());
-console.log('Товаров в куорзине:', basket.getTotalProducts());
+console.log('Товаров в корзине:', basket.getTotalProducts());
 
 if (productToAdd.id) {
     basket.deleteProductFromBasket(productToAdd.id);
@@ -36,15 +35,11 @@ console.log(basket.checkProductInBasket(apiProducts.items[1].id));
 basket.clearBasket();
 console.log(basket.getBasketProducts());
 
-const testCustomerInfo: ICustomer = {
-    payments: 'card',
-    address: 'ул. Пушкина, д. 15',
-    email: 'test@example.com',
-    phone: '+7 (999) 123-45-67'
-};
-
-const customer = new Customer(testCustomerInfo);
-console.log(customer);
+const customer = new Customer();
+customer.setCustomerInfo({address: 'ул. Пушкина, д. 15', phone: '+7 (999) 123-45-67'});
+console.log(customer.getCustomerInfo());
+console.log(customer.checkValidityForms());
+customer.setCustomerInfo({payments: 'card', email: 'test@example.com'});
 console.log(customer.getCustomerInfo());
 console.log(customer.checkValidityForms());
 customer.clearCustomerInfo();
