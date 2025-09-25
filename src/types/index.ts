@@ -26,8 +26,11 @@ export interface IApiResponse {
     items: IProduct[];
 }
 
-export interface IOrderRequest extends ICustomer{
-    total: number;
+export interface IOrderRequest{
+    payment: 'cash' | 'card';
+    email: string;
+    phone: string;
+    address: string;total: number;
     items: string[]; // массив ID товаров
 }
 

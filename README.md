@@ -178,3 +178,178 @@ Presenter - презентер содержит основную логику п
 - submitOrder(order: IOrderRequest): Promise<IOrderResponse>
 - get<T>(uri: string): Promise<T>
 - post<T>(uri: string, data: object, method?: ApiPostMethods): Promise<T>
+
+## Слой представления
+### Интерфейс IHeaderBasket:
+- counter: number;
+### Класс `HeaderBasket`:
+Предоставляет информацию о количестве товаров в корзине. Наследует класс `Component<IHeaderBasket>`.
+Поля: 
+- counterElement: HTMLElement;
+- openBsketModal: HTMLButtonElement;
+Методы:
+- set counter(value: number);
+
+### Интерфейс IGallery:
+- catalog: HTMLElement
+### Класс `Gallery`:
+Отображает каталог товаров. Наследует класс `Component<IGallery>`.
+Поля:
+- catalogElement: HTMLElement[];
+Методы:
+- set catalog(items: HTMLElement[]);
+
+### Интерфейс IModal:
+- content: HTMLElement;
+### Класс `Modal`:
+Предоставляет контейнер - модальное окно. Наследует класс `Component<IModal>`.
+Поля:
+- closeModal: HTMLButtonElement;
+- modalContent: HTMLElement;
+Методы:
+- set content(HTMLElemenmt);
+
+### Интерфейс IBsketModal:
+- basketItems: HTMLElement[];
+- totalPrice: HTMLElement;
+### Класс `BasketModal`:
+Отображает список добавленных товаров в корзину и оющую стоимость товаров. Наследуте класс `Component<IBasketModal>`.
+Поля:
+- makeAnOrderButton: HTMLButtonElement;
+- totalPriceElement: HTMLElement;
+Методы:
+- set basketItems(HTMLElemnt[]);
+- set totalPrice(value: number);
+
+### Класс `Card`:
+Базовый класс для всех типов карточек товаров. Наследует класс `Component<T>`.
+Поля:
+- buttonElement: HTMLButtonElement;
+- priceElement: HTMLElement;
+Методы:
+- ser id(value: string);
+- set price(value: number | null);
+- set category(value: string);
+- set image(value: string);
+- set title(value: string);
+- set description(value: string);
+- set buttonText(value: string);
+
+### Интерфейс ICatalogCard:
+- id: string
+- category: string;
+- description: string;
+- image: string;
+- price: number | null;
+### Класс `CatalogCard`:
+Карточка товара для отображения в каталоге. Наследует класс `Card<ICatalogCard>`.
+### Интерфейс IPreviewCard:
+- id: string;
+- category: string;
+- title: string;
+- description: string;
+- image: string;
+- price: number | null;
+- inBasket: boolean
+### Класс `PreviewCard`:
+Карточка товара для просмотра в модальном окне. Наследует класс `Card<IPreviewCard>`.
+Методы:
+- set inBasket(value: boolean);
+### Интерфейс IBasketCard:
+- id: string;
+- title: string;
+- price: number;
+- index: number;
+### Класс `BasketCard`:
+Карточка товара для отображения в корзине. Наследует класс `Card<IBasketCard>`.
+Методы:
+- set cardIndex(value: number);
+
+### Класс `Form`:
+Базовый класс для всех форм в приложении. Наследует класс `Component<T>`.
+Поля:
+- formButtonElemnet: HTMLButtonElement;
+- errors: HTMLElement;
+Методы:
+- set valid(value: boolean);
+- set errors(value: string[]);
+- clearForm(): void;
+
+### Интерфейс IDeliveryForm:
+- payment: 'card' | 'cash';
+- address: string;
+### Класс `DeliveryForm`:
+Форма данных доставки. Наследует класс `Form<IDelivery>`
+Поля:
+- addressInput: HTMLInputElement;
+- paymentButtons: HTMLButtonElement[];
+- nextButton: HTMLButtonElement;
+Методы:
+- set address(value: string);
+- set payment(value: 'card' | 'cash');
+- set aktiveNextButton(value: boolean);
+### Интерфейс IContactsForm:
+- email: string;
+- phone: string;
+### Класс `ContactsForm`:
+Форма контактных данных покупателя. Наследует класс `Form<IContacts>`.
+Поля:
+- emailInput: HTMLInputElement;
+- phoneInput: HTMLInputElement;
+- payButton: HTMLButtonElement;
+Методы:
+- set aktivePayButton(value: boolean);
+
+### Интерфейс ISuccessMessage:
+- total: number;
+### Класс `SuccessMessage`:
+Сообщение об успешном оформлении заказа. Наследует класс `Component<ISuccess>`.
+Поля:
+- reloadWebsiteButton: HTMLButtonElement;
+Методы:
+- set total(value: number);
+
+## События приложения
+### События корзины
+- `basket:open` - открытие корзины;
+- `basket:remove` - удаление товара из корзины;
+### События карточек товаров
+- `card:select` - выбор карточки товара для просмотра;
+- `card:toggle` - добавление/удаление товара в корзину;
+### События модальных окон
+- `modal:open` - открытие модального окна;
+- `modal:close` - закрытие модального окна;
+### События форм
+- `order:input` - ввод данных в форму заказа;
+- `order:submit` - отправка формы заказа;
+- `contacts:input` - ввод данных в форму контактов;
+- `contacts:submit` - отправка формы контактов;
+- `order.payment:change` - изменение способа оплаты;
+### События успешного заказа
+- `success:close` - закрытие окна успешного заказа;
+
+## Презентер
+
+В приложении "Web-Larёk" презентер реализован в виде набора функций-обработчиков в файле main.ts, которые координируют взаимодействие между моделями данных и представлениями согласно парадигме MVP.
+
+### Архитектура:
+
+- Инициализация компонентов - создание экземпляров моделей и представлений при запуске приложения
+- Настройка событийной системы - подписка на события через EventEmitter
+- Обработчики событий - чистые функции, реагирующие на изменения данных и действия пользователя
+
+### Ключевые функции:
+
+- handleCatalogChange() - обработка изменения каталога товаров, рендер карточек
+- handleProductSelect() - открытие модального окна с деталями товара
+- handleCardToggle() - добавление/удаление товаров из корзины
+- handleBasketChange() - обновление счетчика корзины в заголовке
+- handleDeliverySubmit() - валидация и переход к форме контактов
+- handleContactsSubmit() - финальная валидация и отправка заказа на сервер
+- handleCustomerChange() - динамическое обновление валидации форм
+
+### Презентер отвечает за:
+- Координацию между Model и View
+- Обработку бизнес-логики приложения
+- Валидацию данных перед отправкой на сервер
+- Управление состоянием UI (открытие/закрытие модальных окон)

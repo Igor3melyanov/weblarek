@@ -1,16 +1,19 @@
 import { ICustomer } from "../../types";
+import { EventEmitter } from "../base/Events";
 
 export class Customer implements ICustomer{
     payments: "" | "cash" | "card";
     address: string;
     email: string;
     phone: string;
+    protected events: EventEmitter;
 
-    constructor() {
+    constructor(events: EventEmitter) {
         this.payments = '';
         this.address = '';
         this.email = '';
-        this.phone = ''
+        this.phone = '';
+        this.events = events;
     }
 
     setCustomerInfo(info: Partial<ICustomer>): void {
@@ -18,6 +21,7 @@ export class Customer implements ICustomer{
         if (info.address !== undefined) this.address = info.address;
         if (info.email !== undefined) this.email = info.email;
         if (info.phone !== undefined) this.phone = info.phone;
+        this.events.emit('customer:changed', {customer: this.getCustomerInfo()});
     };
     getCustomerInfo(): ICustomer {
         return {
@@ -64,5 +68,6 @@ export class Customer implements ICustomer{
         this.address = '';
         this.email = '';
         this. phone = '';
+        this.events.emit('customer:changed', {customer: this.getCustomerInfo()});
     };
 }
