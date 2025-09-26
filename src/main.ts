@@ -34,7 +34,10 @@ const orderTemplate = ensureElement<HTMLTemplateElement>('#order');
 const contactsTemplate = ensureElement<HTMLTemplateElement>('#contacts');
 const successTemplate = ensureElement<HTMLTemplateElement>('#success');
 
-let isSubmitting = false;
+const basketModal = new BasketModal(events, cloneTemplate(basketTemplate));
+const deliveryForm = new DeliveryForm(events, cloneTemplate(orderTemplate));
+const contactsForm = new ContactsForm(events, cloneTemplate(contactsTemplate));
+const successMessage = new SuccessMessage(events, cloneTemplate(successTemplate));
 
 async function loadProducts() {
     try {
@@ -88,40 +91,39 @@ function handleBasketChange(): void {
     headerBasket.counter = basketModel.getTotalProducts();
 }
 
-function handleCustomerChange(): void {
+function handleOrderChange(data: { field: string; value: any }): void {
+    switch (data.field) {
+        case 'payment':
+            customerModel.setPayment(data.value);
+            break;
+        case 'address':
+            customerModel.setAddress(data.value);
+            break;
+        case 'email':
+            customerModel.setEmail(data.value);
+            break;
+        case 'phone':
+            customerModel.setPhone(data.value);
+            break;
+    }
+}
+
+function handleFormErrors(data: { errors: Record<string, string> }): void {
     if (modal.isOpen()) {
         const modalContent = modal['container'].querySelector('.modal__content');
         const currentContent = modalContent?.firstElementChild as HTMLElement;
         if (currentContent) {
-            const errors = customerModel.checkValidityForms();
             const isOrderForm = currentContent.querySelector('input[name="address"]') !== null;
             const isContactsForm = currentContent.querySelector('input[name="email"]') !== null;
+            
             if (isOrderForm) {
-                try {
-                    const orderForm = new DeliveryForm(events, currentContent);
-                    const isDeliveryValid = !!customerModel.payments && !!customerModel.address.trim();
-                    
-                    orderForm.valid = isDeliveryValid;
-                    orderForm.errors = [
-                        errors.payments || '', 
-                        errors.address || ''
-                    ];
-                } catch (error) {
-                    console.log('Ощибка формы доставки:', error);
-                }
+                const isDeliveryValid = !data.errors.payments && !data.errors.address;
+                deliveryForm.valid = isDeliveryValid;
+                deliveryForm.errors = [data.errors.payments || '', data.errors.address || ''];
             } else if (isContactsForm) {
-                try {
-                    const contactsForm = new ContactsForm(events, currentContent);
-                    const isContactsValid = !!customerModel.email.trim() && !!customerModel.phone.trim();
-                    
-                    contactsForm.valid = isContactsValid;
-                    contactsForm.errors = [
-                        errors.email || '', 
-                        errors.phone || ''
-                    ];
-                } catch (error) {
-                    console.log('Ошибка формы контактов:', error);
-                }
+                const isContactsValid = !data.errors.email && !data.errors.phone;
+                contactsForm.valid = isContactsValid;
+                contactsForm.errors = [data.errors.email || '', data.errors.phone || ''];
             }
         }
     }
@@ -136,19 +138,16 @@ function handleCardSelect(data: { target: HTMLElement }): void {
     }
 }
 
-function handleCardToggle(data: { target: HTMLElement }): void {
-    const productId = data.target.dataset.id;
-    if (!productId) return;
-    const product = catalogModel.getCatalog().find(item => item.id === productId);
-    if (product) {
-        if (basketModel.checkProductInBasket(productId)) {
-            basketModel.deleteProductFromBasket(productId);
-        } else {
-            basketModel.addProductToBasket(product);
-        }
+function handleCardToggle(): void {
+    const product = catalogModel.getCardProduct();
+    if (!product) return;
+    
+    if (basketModel.checkProductInBasket(product.id)) {
+        basketModel.deleteProductFromBasket(product.id);
+    } else {
+        basketModel.addProductToBasket(product);
     }
-
-    modal.close()
+    modal.close();
 }
 
 function handleBasketOpen(): void {
@@ -156,10 +155,8 @@ function handleBasketOpen(): void {
     modal.open();
 }
 
-function handleBasketRemove(data: { target: HTMLElement }): void {
-    const productId = data.target.dataset.id;
-    if (!productId) return;
-    basketModel.deleteProductFromBasket(productId);
+function handleBasketRemove(data: { id: string }): void {
+    basketModel.deleteProductFromBasket(data.id);
     if (modal.isOpen()) {
         renderBasketModal();
     }
@@ -167,45 +164,41 @@ function handleBasketRemove(data: { target: HTMLElement }): void {
 
 function handleOrderOpen(): void {
     if (basketModel.getTotalProducts() > 0) {
-        const orderForm = new DeliveryForm(events, cloneTemplate(orderTemplate));
-        
-        const formElement = orderForm.render({
+        const formElement = deliveryForm.render({
             payment: customerModel.payments as 'card' | 'cash',
             address: customerModel.address
         });
         
         modal.content = formElement;
-        setTimeout(() => handleCustomerChange(), 0);
     }
-};
+}
 
 function handleDeliverySubmit(): void {
     const errors = customerModel.checkValidityForms();
     const isDeliveryValid = !errors.payments && !errors.address;
     
     if (isDeliveryValid) {
-        const contactsForm = new ContactsForm(events, cloneTemplate(contactsTemplate));
         const formElement = contactsForm.render({
             email: customerModel.email,
             phone: customerModel.phone
         });
         modal.content = formElement;
-        setTimeout(() => handleCustomerChange(), 0);
     } else {
         console.log('Форма доставки содержит ошибки:', errors);
-        handleCustomerChange();
     }
 }
 
 async function handleContactsSubmit(): Promise<void> {
-    if (isSubmitting) return;
+    const errors = customerModel.checkValidityForms();
+    const isOrderValid = !errors.payments && !errors.address && !errors.email && !errors.phone;
     
-    isSubmitting = true;
-    try {
-        const errors = customerModel.checkValidityForms();
-        const isOrderValid = !errors.payments && !errors.address && !errors.email && !errors.phone;
-        
-        if (isOrderValid) {
+    if (isOrderValid) {
+        const submitButton = contactsForm['container']?.querySelector('button[type="submit"]');
+        if (submitButton) {
+            submitButton.setAttribute('disabled', 'true');
+            submitButton.textContent = 'Отправка...';
+        }
+        try {
             const orderData = {
                 payment: customerModel.payments as 'cash' | 'card',
                 address: customerModel.address,
@@ -214,54 +207,31 @@ async function handleContactsSubmit(): Promise<void> {
                 total: basketModel.getTotalSum(),
                 items: basketModel.getBasketProducts().map(item => item.id)
             };
-            
             const result = await weblarekApi.submitOrder(orderData);
-            
-            const successMessage = new SuccessMessage(events, cloneTemplate(successTemplate));
             const successElement = successMessage.render({
                 total: result.total
             });
-            
             modal.content = successElement;
             basketModel.clearBasket();
             customerModel.clearCustomerInfo();
-        } else {
-            console.log('Форма содержит ошибки:', errors);
-            handleCustomerChange();
+        } catch (error) {
+            console.error('Ошибка оформления заказа:', error);
+            const submitButton = contactsForm['container']?.querySelector('button[type="submit"]');
+            if (submitButton) {
+                submitButton.removeAttribute('disabled');
+                submitButton.textContent = 'Оформить';
+            }
         }
-    } catch (error) {
-        console.error('Ошибка оформления заказа:', error);
-    } finally {
-        isSubmitting = false;
+    } else {
+        console.log('Форма содержит ошибки:', errors);
     }
-}
-
-function handlePaymentChange(data: { payment: 'card' | 'cash' }): void {
-    customerModel.setCustomerInfo({ payments: data.payment });
-}
-
-function handleAddressChange(data: { address: string }): void {
-    customerModel.setCustomerInfo({ address: data.address });
-}
-
-function handleEmailChange(data: { email: string }): void {
-    customerModel.setCustomerInfo({ email: data.email });
-}
-
-function handlePhoneChange(data: { phone: string }): void {
-    customerModel.setCustomerInfo({ phone: data.phone });
 }
 
 function handleModalClose(): void {
     modal.close();
 }
 
-function handleSuccessClose(): void {
-    modal.close();
-}
-
 function renderBasketModal(): void {
-    const basketModal = new BasketModal(events, cloneTemplate(basketTemplate));
     const basketItems = basketModel.getBasketProducts().map((item, index) => {
         const basketCard = new BasketCard(events, cloneTemplate(cardBasketTemplate));
         return basketCard.render({
@@ -285,7 +255,8 @@ function setupEventListeners(): void {
     events.on('catalog:changed', handleCatalogChange);
     events.on('product:selected', handleProductSelect);
     events.on('basket:changed', handleBasketChange);
-    events.on('customer:changed', handleCustomerChange);
+    events.on('form:errors', handleFormErrors);
+    events.on('order:change', handleOrderChange);
     events.on('card:select', handleCardSelect);
     events.on('card:toggle', handleCardToggle);
     events.on('basket:open', handleBasketOpen);
@@ -293,12 +264,8 @@ function setupEventListeners(): void {
     events.on('order:open', handleOrderOpen);
     events.on('delivery:submit', handleDeliverySubmit);
     events.on('contacts:submit', handleContactsSubmit);
-    events.on('order.payment:change', handlePaymentChange);
-    events.on('order.address:change', handleAddressChange);
-    events.on('contacts.email:change', handleEmailChange);
-    events.on('contacts.phone:change', handlePhoneChange);
     events.on('modal:close', handleModalClose);
-    events.on('success:close', handleSuccessClose);
+    events.on('success:close', handleModalClose);
 }
 
 async function initApp(): Promise<void> {

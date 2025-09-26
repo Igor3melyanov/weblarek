@@ -9,7 +9,7 @@ export class Form<T> extends Component<T> {
     constructor(protected events: IEvents, container: HTMLElement) {
         super(container);
         this.submitButton = ensureElement<HTMLButtonElement>('button[type="submit"]', this.container);
-        this.errorsElement = ensureElement('.form__errors', this.container); 
+        this.errorsElement = ensureElement('.form__errors', this.container);
         this.errorsElement.style.display = 'none';
     }
 
@@ -27,11 +27,6 @@ export class Form<T> extends Component<T> {
         const inputs = this.container.querySelectorAll('input');
         inputs.forEach(input => input.value = '');
         this.errors = [];
-    };
-    
-    render(data?: Partial<T>): HTMLElement {
-        Object.assign(this as object, data ?? {});
-        return this.container;
     }
 }
 
@@ -44,27 +39,32 @@ export class DeliveryForm extends Form<IDeliveryForm> {
     protected addressInput: HTMLInputElement;
     protected paymentButtons: HTMLButtonElement[];
 
-    constructor(protected events:IEvents, container: HTMLElement) {
+    constructor(protected events: IEvents, container: HTMLElement) {
         super(events, container);
         this.addressInput = ensureElement<HTMLInputElement>(`input[name="address"]`, this.container)
         this.paymentButtons = [
             ensureElement<HTMLButtonElement>('button[name="card"]', this.container),
             ensureElement<HTMLButtonElement>('button[name="cash"]', this.container)
         ];
+
         this.paymentButtons.forEach(button => {
             button.addEventListener('click', () => {
                 this.paymentButtons.forEach(btn => btn.classList.remove('button_alt-active'));
                 button.classList.add('button_alt-active');
-                this.events.emit('order.payment:change', {
-                    payment: button.name as 'card' | 'cash'
+                this.events.emit('order:change', {
+                    field: 'payment',
+                    value: button.name as 'card' | 'cash'
                 });
             });
         });
+
         this.addressInput.addEventListener('input', () => {
-            this.events.emit('order.address:change', {
-                address: this.addressInput.value
+            this.events.emit('order:change', {
+                field: 'address', 
+                value: this.addressInput.value
             });
         });
+        
         this.container.addEventListener('submit', (event) => {
             event.preventDefault();
             this.events.emit('delivery:submit');
@@ -99,21 +99,24 @@ export class ContactsForm extends Form<IContactsForm> {
         this.emailInput = ensureElement<HTMLInputElement>('input[name="email"]', container);
         this.phoneInput = ensureElement<HTMLInputElement>('input[name="phone"]', container);
         this.emailInput.addEventListener('input', () => {
-            this.events.emit('contacts.email:change', {
-                email: this.emailInput.value
+            this.events.emit('order:change', {
+                field: 'email',
+                value: this.emailInput.value
             });
         });
 
         this.phoneInput.addEventListener('input', () => {
-            this.events.emit('contacts.phone:change', {
-                phone: this.phoneInput.value
+            this.events.emit('order:change', {
+                field: 'phone',
+                value: this.phoneInput.value
             });
         });
+
         this.container.addEventListener('submit', (event) => {
             event.preventDefault();
             this.events.emit('contacts:submit');
         });
-}
+    }
 
     set email(value: string) {
         this.emailInput.value = value;

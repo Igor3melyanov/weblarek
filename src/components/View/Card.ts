@@ -1,7 +1,7 @@
+import { categoryMap } from "../../utils/constants";
 import { ensureElement } from "../../utils/utils";
 import { Component } from "../base/Component";
 import { IEvents } from "../base/Events";
-import { categoryMap } from "./Constants";
 
 export class Card<T> extends Component<T> {
     constructor(protected events: IEvents, container: HTMLElement) {
@@ -164,7 +164,7 @@ export class BasketCard extends Card<IBasketCard> {
         this.deleteButton = ensureElement<HTMLButtonElement>('.basket__item-delete', container);
 
         this.deleteButton.addEventListener('click', () => {
-            this.events.emit('basket:remove', {target: this.container});
+            this.events.emit('basket:remove', { id: this.container.dataset.id });
         });
     }
 

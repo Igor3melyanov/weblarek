@@ -16,13 +16,42 @@ export class Customer implements ICustomer{
         this.events = events;
     }
 
-    setCustomerInfo(info: Partial<ICustomer>): void {
-        if (info.payments !== undefined) this.payments = info.payments;
-        if (info.address !== undefined) this.address = info.address;
-        if (info.email !== undefined) this.email = info.email;
-        if (info.phone !== undefined) this.phone = info.phone;
-        this.events.emit('customer:changed', {customer: this.getCustomerInfo()});
-    };
+    setPayment(payment: 'cash' | 'card'): void {
+        this.payments = payment;
+        this.events.emit('customer:changed', { 
+            field: 'payments', 
+            value: payment 
+        });
+        this.validateAndEmit();
+    }
+
+    setAddress(address: string): void {
+        this.address = address;
+        this.events.emit('customer:changed', { 
+            field: 'address', 
+            value: address 
+        });
+        this.validateAndEmit();
+    }
+
+    setEmail(email: string): void {
+        this.email = email;
+        this.events.emit('customer:changed', { 
+            field: 'email', 
+            value: email 
+        });
+        this.validateAndEmit();
+    }
+
+    setPhone(phone: string): void {
+        this.phone = phone;
+        this.events.emit('customer:changed', { 
+            field: 'phone', 
+            value: phone 
+        });
+        this.validateAndEmit();
+    }
+
     getCustomerInfo(): ICustomer {
         return {
             payments: this.payments,
@@ -30,7 +59,8 @@ export class Customer implements ICustomer{
             email: this.email,
             phone: this.phone
         }
-    };
+    }
+
     validateField(field: keyof ICustomer): string {
         const value = this[field];
         
@@ -48,26 +78,28 @@ export class Customer implements ICustomer{
         }
     }
 
-    checkValidityForms(): {
-        payments?: string,
-        address?: string,
-        email?: string,
-        phone?:string
-    } { 
-        const errors = {
+    checkValidityForms(): Record<string, string> {
+        return {
             payments: this.validateField('payments'),
             address: this.validateField('address'),
             email: this.validateField('email'),
             phone: this.validateField('phone')
         };
+    }
 
-        return errors;
-    }; 
+    private validateAndEmit(): void {
+        const errors = this.checkValidityForms();
+        this.events.emit('form:errors', { errors });
+    }
+
     clearCustomerInfo(): void {
         this.payments = '';
         this.address = '';
         this.email = '';
-        this. phone = '';
-        this.events.emit('customer:changed', {customer: this.getCustomerInfo()});
-    };
+        this.phone = '';
+        this.events.emit('customer:changed', { 
+            field: 'all', 
+            value: this.getCustomerInfo() 
+        });
+    }
 }

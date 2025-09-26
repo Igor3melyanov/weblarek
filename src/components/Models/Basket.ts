@@ -13,23 +13,19 @@ export class Basket {
     getBasketProducts(): IProduct[] {
         return this.basket;
     };
-    addProductToBasket(product: IProduct): IProduct[] {
-        if (product.price !== null && product.price !== undefined) {
-            if (!this.checkProductInBasket(product.id)) { 
-                this.basket.push(product);
-                this.events.emit('basket:changed', {basket: this.basket});
-            } 
-        }
-        return this.basket; 
+    addProductToBasket(product: IProduct): void {
+        if (product.price !== null && !this.checkProductInBasket(product.id)) {
+            this.basket.push(product);
+            this.events.emit('basket:changed');
+        } 
     };
-    deleteProductFromBasket(id: IProduct['id']): IProduct[] {
+    deleteProductFromBasket(id: IProduct['id']): void {
         this.basket = this.basket.filter((product) => product.id !== id);
-        this.events.emit('basket:changed', {basket: this.basket});
-        return this.basket;
+        this.events.emit('basket:changed');
     };
-    clearBasket(): IProduct[] {
-        this.events.emit('basket:changed', {basket: this.basket});
-        return this.basket = [];
+    clearBasket(): void {
+        this.basket = [];
+        this.events.emit('basket:changed');
     };
     getTotalSum(): number {
         return this.basket.reduce((total, product) => {
