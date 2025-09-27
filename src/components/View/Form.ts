@@ -28,6 +28,10 @@ export class Form<T> extends Component<T> {
         inputs.forEach(input => input.value = '');
         this.errors = [];
     }
+
+    get Container(): HTMLElement {
+        return this.container;
+    }
 }
 
 export interface IDeliveryForm {

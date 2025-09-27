@@ -39,6 +39,8 @@ const deliveryForm = new DeliveryForm(events, cloneTemplate(orderTemplate));
 const contactsForm = new ContactsForm(events, cloneTemplate(contactsTemplate));
 const successMessage = new SuccessMessage(events, cloneTemplate(successTemplate));
 
+let activeForm: 'delivery' | 'contacts' | null = null;
+
 async function loadProducts() {
     try {
         const productsFromServer = await weblarekApi.getProductList();
@@ -109,23 +111,14 @@ function handleOrderChange(data: { field: string; value: any }): void {
 }
 
 function handleFormErrors(data: { errors: Record<string, string> }): void {
-    if (modal.isOpen()) {
-        const modalContent = modal['container'].querySelector('.modal__content');
-        const currentContent = modalContent?.firstElementChild as HTMLElement;
-        if (currentContent) {
-            const isOrderForm = currentContent.querySelector('input[name="address"]') !== null;
-            const isContactsForm = currentContent.querySelector('input[name="email"]') !== null;
-            
-            if (isOrderForm) {
-                const isDeliveryValid = !data.errors.payments && !data.errors.address;
-                deliveryForm.valid = isDeliveryValid;
-                deliveryForm.errors = [data.errors.payments || '', data.errors.address || ''];
-            } else if (isContactsForm) {
-                const isContactsValid = !data.errors.email && !data.errors.phone;
-                contactsForm.valid = isContactsValid;
-                contactsForm.errors = [data.errors.email || '', data.errors.phone || ''];
-            }
-        }
+    if (activeForm === 'delivery') {
+        const isDeliveryValid = !data.errors.payments && !data.errors.address;
+        deliveryForm.valid = isDeliveryValid;
+        deliveryForm.errors = [data.errors.payments || '', data.errors.address || ''];
+    } else if (activeForm === 'contacts') {
+        const isContactsValid = !data.errors.email && !data.errors.phone;
+        contactsForm.valid = isContactsValid;
+        contactsForm.errors = [data.errors.email || '', data.errors.phone || ''];
     }
 }
 
@@ -170,6 +163,7 @@ function handleOrderOpen(): void {
         });
         
         modal.content = formElement;
+        activeForm = 'delivery';
     }
 }
 
@@ -183,6 +177,7 @@ function handleDeliverySubmit(): void {
             phone: customerModel.phone
         });
         modal.content = formElement;
+        activeForm = 'contacts';
     } else {
         console.log('Форма доставки содержит ошибки:', errors);
     }
@@ -193,11 +188,8 @@ async function handleContactsSubmit(): Promise<void> {
     const isOrderValid = !errors.payments && !errors.address && !errors.email && !errors.phone;
     
     if (isOrderValid) {
-        const submitButton = contactsForm['container']?.querySelector('button[type="submit"]');
-        if (submitButton) {
-            submitButton.setAttribute('disabled', 'true');
-            submitButton.textContent = 'Отправка...';
-        }
+        contactsForm.valid = false;
+        
         try {
             const orderData = {
                 payment: customerModel.payments as 'cash' | 'card',
@@ -207,20 +199,18 @@ async function handleContactsSubmit(): Promise<void> {
                 total: basketModel.getTotalSum(),
                 items: basketModel.getBasketProducts().map(item => item.id)
             };
+            
             const result = await weblarekApi.submitOrder(orderData);
             const successElement = successMessage.render({
                 total: result.total
             });
+            
             modal.content = successElement;
             basketModel.clearBasket();
             customerModel.clearCustomerInfo();
         } catch (error) {
             console.error('Ошибка оформления заказа:', error);
-            const submitButton = contactsForm['container']?.querySelector('button[type="submit"]');
-            if (submitButton) {
-                submitButton.removeAttribute('disabled');
-                submitButton.textContent = 'Оформить';
-            }
+            contactsForm.valid = true;
         }
     } else {
         console.log('Форма содержит ошибки:', errors);
@@ -229,6 +219,7 @@ async function handleContactsSubmit(): Promise<void> {
 
 function handleModalClose(): void {
     modal.close();
+    activeForm = null;
 }
 
 function renderBasketModal(): void {
