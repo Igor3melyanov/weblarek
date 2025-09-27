@@ -19,6 +19,9 @@ export class BasketModal extends Component<IBasket> {
         this.list = ensureElement<HTMLElement>('.basket__list', this.container);
         this.totalCount = ensureElement<HTMLElement>('.basket__price', this.container);
         this.button = ensureElement<HTMLButtonElement>('.basket__button', this.container);
+        this.list.style.maxHeight = `60vh`;
+        this.list.style.overflowY = `auto`;
+        this.list.style.padding = ` 0 20px 0 0`
 
         this.button.addEventListener('click', () => {
             this.events.emit('order:open');
