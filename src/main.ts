@@ -91,6 +91,7 @@ function handleProductSelect(data: { product: any }): void {
 
 function handleBasketChange(): void {
     headerBasket.counter = basketModel.getTotalProducts();
+    renderBasketModal();
 }
 
 function handleOrderChange(data: { field: string; value: any }): void {
@@ -144,15 +145,12 @@ function handleCardToggle(): void {
 }
 
 function handleBasketOpen(): void {
-    renderBasketModal();
+    modal.content = basketModal.render();
     modal.open();
 }
 
 function handleBasketRemove(data: { id: string }): void {
     basketModel.deleteProductFromBasket(data.id);
-    if (modal.isOpen()) {
-        renderBasketModal();
-    }
 }
 
 function handleOrderOpen(): void {
@@ -205,9 +203,9 @@ async function handleContactsSubmit(): Promise<void> {
                 total: result.total
             });
             
-            modal.content = successElement;
             basketModel.clearBasket();
             customerModel.clearCustomerInfo();
+            modal.content = successElement;
         } catch (error) {
             console.error('Ошибка оформления заказа:', error);
             contactsForm.valid = true;
